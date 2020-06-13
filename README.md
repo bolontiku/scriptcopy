@@ -1,6 +1,6 @@
 # Scriptcopy
 
-> Copy of arcris
+> Copy
 ```
 git clone git://github.com/bolontiku/scriptcopy
 cd scriptcopy

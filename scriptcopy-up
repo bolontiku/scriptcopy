@@ -16,7 +16,7 @@ done | dialog --title '| Hecho por Código Cristo |' --gauge "\nVisite la comuni
 
 cp .dialogrc ~/.dialogrc
 cp Scriptcopy /bin/scriptcopy
-cp arcris-up /bin/scriptcopy-up
+cp scriptcopy-up /bin/scriptcopy-up
 
 cd ..
 rm -r scriptcopy

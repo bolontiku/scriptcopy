@@ -1,6 +1,6 @@
 # Scriptcopy
 
-> Instalar Arch Linux en Español
+> Copy of arcris
 ```
 git clone git://github.com/bolontiku/scriptcopy
 cd scriptcopy

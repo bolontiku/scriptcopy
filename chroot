@@ -1,0 +1,1830 @@
+#!/bin/bash
+#Gracias:
+#@konrc 
+#@edu4rdt
+#@nahuelwexd
+
+#Colores
+clear
+red='\033[38;2;255;0;02m'
+
+
+r8168=$(lspci -k | grep 'RTL8111/8168/8411')
+if [[ $r8168  = *RTL8111/8168/8411* || $r8168 = *Rtl8111/8168/8411* || $r8168 = *rtl8111/8168/8411* ]]
+then            
+echo ""
+echo ""
+echo "Modulo especial de Ethernet 8168 Detectado"
+echo ""
+sleep 2
+lspci | grep -i net
+echo ""
+modprobe r8168
+echo ""
+echo "modprobe r8168"
+sleep 2
+lsmod | grep r8168
+sleep 3
+dmesg | grep r8168
+sleep 2
+echo ""
+echo "Eliminando módulo en conflicto Ethernet 8169"
+echo ""
+sleep 2
+echo "rmmod r8169"
+sleep 10
+echo "modprobe -r r8169"
+modprobe -v r8168
+sleep 20
+
+function ProgressBar {
+# Process data
+    let _progress=(${1}*100/${2}*100)/100
+    let _done=(${_progress}*6)/10
+    let _left=60-$_done
+# Build progressbar string lengths
+    _fill=$(printf "%${_done}s")
+    _empty=$(printf "%${_left}s")
+
+# 1.2 Build progressbar strings and print the ProgressBar line
+# 1.2.1 Output example:                           
+# 1.2.1.1 Progress : [########################################] 100%
+printf "\r > Cargando : |${_fill// /▇}${_empty// /-}< ${_progress}%%"
+
+}
+
+# Variables
+_start=1
+
+# This accounts as the "totalState" variable for the ProgressBar function
+_end=100
+
+# Proof of concept
+for number in $(seq ${_start} ${_end})
+do
+    sleep 0.3
+    ProgressBar ${number} ${_end}
+done
+echo -e ''
+clear
+
+else
+echo ""
+fi
+
+
+broadcom=$(lspci -k | grep 'Network controller: Broadcom')
+if [[ $broadcom  = *Broadcom* || $broadcom = *broadcom* || $broadcom = *BROADCOM* ]]
+then    
+echo ""
+echo ""    
+echo "Modulo especial de Wifi Broadcom Detectado"    
+modprobe wl
+echo ""
+echo "modprobe wl"
+rmmod b43
+echo "rmmod b43"
+rmmod ssb
+echo "rmmod ssb"
+else
+echo "" 
+fi
+
+echo ""
+echo -e $red ">-------------------------------------------------------------------------<";
+echo -e $red ">                                                                         <";
+echo -e $red ">                                                                         <";
+echo -e $red ">                      ██   █▄▄▄▄ ▄█▄    █▄▄▄▄ ▄█    ▄▄▄▄▄                <";
+echo -e $red ">                      █ █  █  ▄▀ █▀ ▀▄  █  ▄▀ ██   █     ▀▄              <";
+echo -e $red ">                      █▄▄█ █▀▀▌  █   ▀  █▀▀▌  ██ ▄  ▀▀▀▀▄                <";
+echo -e $red ">                      █  █ █  █  █▄  ▄▀ █  █  ▐█  ▀▄▄▄▄▀                 <";
+echo -e $red ">                         █   █   ▀███▀    █    ▐                         <";
+echo -e $red ">                        █   ▀            ▀                               <";
+echo -e $red ">                       ▀                                                 <";
+echo -e $red ">                                                                         <";
+echo -e $red ">    Cargando configuraciones y esperando conexión de internet estable    <";
+echo -e $red ">                                                                         <";
+function ProgressBar {
+# Process data
+    let _progress=(${1}*100/${2}*100)/100
+    let _done=(${_progress}*6)/10
+    let _left=60-$_done
+# Build progressbar string lengths
+    _fill=$(printf "%${_done}s")
+    _empty=$(printf "%${_left}s")
+
+# 1.2 Build progressbar strings and print the ProgressBar line
+# 1.2.1 Output example:                           
+# 1.2.1.1 Progress : [########################################] 100%
+printf "\r > Cargando : |${_fill// /▇}${_empty// /-}< ${_progress}%%"
+
+}
+
+# Variables
+_start=1
+
+# This accounts as the "totalState" variable for the ProgressBar function
+_end=100
+
+# Proof of concept
+for number in $(seq ${_start} ${_end})
+do
+    sleep 0.3
+    ProgressBar ${number} ${_end}
+done
+echo -e ''
+echo -e ''
+
+ping -c 5 archlinux.org
+
+echo -e ''
+echo -e ''
+
+pacman -Syyu
+
+echo -e '\033[m'
+
+titulo="| Instalación de ArchLinux en Español - https://t.me/ArchLinuxCristo |"
+
+
+#dialog --no-collapse --cr-wrap --backtitle "$titulo" --title "| ESPERE... |" --msgbox "\n| Primero necesitamos saber si hay conexión a Internet |" 7 60
+#sleep 5
+
+if ping -c 3 www.google.com &> /dev/null; then  
+
+   dialog --title "|  Conexión a RED  |" --backtitle "$titulo" \
+   --prgbox "ping -c 3 archlinux.org && echo && echo Si Hay Internet!" 17 100   
+
+else
+
+    dialog --backtitle "$titulo" --title "| Error de RED |" --ok-label 'Siguiente' --msgbox "\nNo hay conexión de Internet" 7 35
+    #wifinet=$(netctl list | awk -F " " '{print $1}')
+    #netctl disable $wifinet
+    #wifinet=$(netctl list | awk -F " " '{print $2}')
+    #netctl disable $wifinet
+    #clear
+    #systemctl disable netctl
+    #systemctl disable netctl-auto@$(ls /sys/class/net | grep "^w").service
+    systemctl enable dhcpcd NetworkManager
+    systemctl start dhcpcd NetworkManager
+    clear
+    wifi_var=0 
+    wlan=$(echo /proc/net/dev*/w*)
+    lan=${wlan##*/}
+    
+    #--title "| Conexión WiFi |"
+    dialog --backtitle "$titulo" --title "¿ Tienes Wi-Fi ?" --yesno "$(echo "" && echo /proc/net/dev*/w* && echo "" && iw dev $lan scan | grep SSID:)" 10 40
+
+case $? in
+   0)       wifi_var=0 
+            wlan=$(echo /proc/net/dev*/w*)
+            lan=${wlan##*/}
+            
+            nombre_red="$(iw dev $lan scan | grep SSID: | awk -F " " '{print $2}' | head -1)"
+            clave_red="Clave"
+            dialog --title "" --backtitle "$titulo" --ok-label "Conectar" --no-cancel \
+              --stdout --form "$(iw dev $lan scan | grep SSID:)" 15 50 0 \
+              "Nombre de Red :  " 0 0 "$nombre_red" 1 20 20 0 \
+              "Contraseña    :  " 2 0 "$clave_red" 2 20 20 0 > output.txt
+            nombre_red=$(cat output.txt | head -1)
+            clave_red=$(cat output.txt | head -2 | tail -1)
+            
+            
+            DIALOG=${DIALOG=dialog}
+            
+            COUNT=10
+            (
+            while test $COUNT != 110
+            do
+            echo $COUNT
+            nmcli dev wifi connect $(cat output.txt | head -1) password $(cat output.txt | head -2 | tail -1)
+            systemctl enable dhcpcd NetworkManager
+            systemctl start dhcpcd NetworkManager
+            COUNT=`expr $COUNT + 50`
+            sleep 1
+            done
+            ) |
+            $DIALOG --backtitle "$titulo" --title "| Conectando a Red Wifi |" --gauge "\n\nConectándose, espere..." 10 50 0
+            
+
+            dialog --backtitle "$titulo" --title "| Estado de Conexión |" \
+            --stdout --ok-label "Siguiente" --prgbox "echo '' && nmcli dev status && echo '' && echo '' && echo 'Nombre de Red: $nombre_red' && echo 'Clave de Red: $clave_red'" 18 68 ; wifi_var=1
+            
+            rm output.txt
+            
+            dialog --title "|  Conexión a RED  |" --backtitle "$titulo" \
+            --prgbox "ping -c 3 archlinux.org && echo && echo Si Hay Internet!" 17 100
+        ;;   
+
+   1)   
+        #systemctl disable netctl
+        #systemctl disable netctl-auto@$(ls /sys/class/net | grep "^w").service
+        systemctl enable dhcpcd NetworkManager
+        systemctl start dhcpcd NetworkManager
+        clear
+        dialog --backtitle "$titulo" --title "| Ethernet |" --msgbox "\nSe Activo correctamente Network Manager para Ethernet\nRevisando PING para confirmar internet..." 8 60
+        dialog --title "|  Conexión a RED  |" --backtitle "$titulo" \
+        --prgbox "ping -c 3 archlinux.org && echo && echo Si Hay Internet!" 17 100
+        
+        ;;
+        
+   255) dialog --backtitle "$titulo" --title "| Ethernet |" --msgbox "\nPresiono [ESC] - Salir del Script" 7 40
+        exit
+        
+        ;;
+        
+esac
+fi
+
+nombre_usuario=$(cat /etc/passwd | grep '/home/' | cut -d: -f1)
+#Para que el sudo no pida clave
+
+# dialog --no-collapse --cr-wrap --backtitle "$titulo" --title "| Actualizando Sistema |" --stdout --ok-label "Siguiente" --prgbox "sudo -u $nombre_usuario yay -Syu --noeditmenu --noconfirm --needed" 25 100
+
+#dialog --no-collapse --cr-wrap --backtitle "$titulo" --title "| Instalando AUR helper |" --stdout --ok-label "Siguiente" --prgbox "cd /home/$nombre_usuario && \
+#git clone https://aur.archlinux.org/yay-bin.git && \
+#chown -R $nombre_usuario:users /home/$nombre_usuario/yay-bin && \
+#chown -R $nombre_usuario:users /home/$nombre_usuario/yay-bin/PKGBUILD && \
+#cd /home/$nombre_usuario/yay-bin && \
+#sudo -u $nombre_usuario makepkg -smp PKGBUILD --noconfirm && \
+#pacman -U *.pkg.tar.xz --noconfirm && \
+#rm -Rf /home/$nombre_usuario/yay-bin" 25 100
+
+# yay -S gotop-git --noeditmenu --noconfirm --removemake
+
+
+
+XORG=$"xorg xorg-apps xorg-xinit xorg-twm xterm"
+
+#Inicio de Video
+VM=false
+VMbox=false
+VMqemu=false
+
+
+    ####################################################################
+      
+    case $(systemd-detect-virt) in
+        oracle)
+            virt="vbox"
+            VM=true
+        ;;
+        vmware)
+            virt="vmware"
+            VM=true
+        ;;
+        qemu)
+            virt="qemu"
+            VM=true
+        ;;
+        kvm)
+            virt="kvm"
+            VM=true
+        ;;
+        microsoft)
+            virt="hyper-v"
+            VM=true
+        ;;
+        xen)
+            virt="xen"
+            VM=true
+        ;;
+    esac
+    
+    ####################################################################
+kernel=$(uname -a | tail -c -6)
+
+if [ "$VM" == "true" ]; then
+    
+            inxi -Gx | dialog --no-collapse --cr-wrap --backtitle "Instalación de ArchLinux - https://t.me/ArchLinuxCristo" --progressbox "-| Driver de Vídeo |-" 15 100; sleep 5
+            case "$virt" in
+                
+                vbox)   if [ "$kernel" == "Linux" ]; then
+                            GPU="virtualbox-guest-utils xf86-video-vmware virtualbox-host-modules-arch mesa mesa-libgl"
+                            GPUvirt="vboxservice"
+                            echo $GPUvirt | awk -F " " '{print $1}' > GPUvirt                            
+                            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Instalar>"  --msgbox "\nVídeo Detectado VirtualBox\nInstalar: VirtualBox Guest utils" 8 80
+                            VMbox=true
+                        else
+                            GPU="virtualbox-guest-dkms virtualbox-host-dkms mesa mesa-libgl"
+                            GPUvirt="systemd-modules-load"
+                            echo $GPUvirt | awk -F " " '{print $1}' > GPUvirt
+                            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Instalar>"  --msgbox "\nVídeo Detectado VirtualBox\nInstalar: VirtualBox Guest-dkms" 8 80
+                            VMbox=true
+                        fi
+                ;;
+                
+                vmware) GPU="xf86-video-vmware xf86-input-vmmouse open-vm-tools net-tools gtkmm mesa mesa-libgl"
+                        dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Instalar>"  --msgbox "\nVídeo Detectado VMware\nInstalar: xf86-video-vmware" 8 80
+                ;;
+                
+                
+                hyper-v) GPU="xf86-video-fbdev mesa-libgl"                         
+                ;;
+                
+                
+                qemu) GPU="xf86-video-fbdev mesa mesa-libgl qemu-guest-agent"
+                      GPUvirt="qemu-ga"
+                      VMqemu=true
+                      dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Instalar>"  --msgbox "\nVídeo Detectado VirtualBox\nInstalar: qemu-guest-agent" 8 80                   
+                ;;
+                
+                
+                *)      GPU="xf86-video-fbdev mesa-libgl"
+                ;;
+                
+            esac
+
+            
+else
+
+dialog --title "-| Driver de Vídeo |-" --yesno "\n¿ Desea instalar de manera automatica su driver de vídeo ? \nPresione Si - Automatico \nPresione No - Manera Manual" 9 62
+case $? in
+   0) inxi -Gx | dialog --no-collapse --cr-wrap --backtitle "Instalación de ArchLinux - https://t.me/ArchLinuxCristo" \
+--progressbox "-| Driver de Vídeo, lea su información, espere... |-" 15 100; sleep 7
+
+if (lspci | grep VGA | grep "NVIDIA\|nVidia" &>/dev/null); then
+    
+GPU="xf86-video-nouveau mesa lib32-mesa mesa-vdpau libva-mesa-driver \
+lib32-mesa-vdpau lib32-libva-mesa-driver libva-vdpau-driver libvdpau-va-gl \
+libva-utils vdpauinfo libvdpau lib32-libvdpau opencl-mesa clinfo ocl-icd \
+lib32-ocl-icd opencl-headers"
+
+dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\n$GPU" 10 80
+            
+
+        elif (lspci | grep VGA | grep "Radeon R\|R2/R3/R4/R5" &>/dev/null); then
+            
+GPU="xf86-video-amdgpu mesa lib32-mesa vulkan-radeon \
+lib32-vulkan-radeon mesa-vdpau libva-mesa-driver lib32-mesa-vdpau \
+lib32-libva-mesa-driver libva-vdpau-driver libvdpau-va-gl libva-utils vdpauinfo \
+opencl-mesa clinfo ocl-icd lib32-ocl-icd opencl-headers"
+dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\n$GPU" 10 80
+
+        elif (lspci | grep VGA | grep "ATI\|AMD/ATI" &>/dev/null); then
+                    
+GPU="xf86-video-ati mesa lib32-mesa mesa-vdpau libva-mesa-driver \
+lib32-mesa-vdpau lib32-libva-mesa-driver libva-vdpau-driver libvdpau-va-gl \
+libva-utils vdpauinfo opencl-mesa clinfo ocl-icd lib32-ocl-icd opencl-headers"
+dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\n$GPU" 10 80
+
+        elif (lspci | grep VGA | grep "Intel" &>/dev/null); then
+            
+GPU="xf86-video-intel vulkan-intel mesa lib32-mesa intel-media-driver \
+libva-intel-driver libva-vdpau-driver libvdpau-va-gl libva-utils vdpauinfo \
+intel-compute-runtime beignet clinfo ocl-icd lib32-ocl-icd opencl-headers"
+dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\n$GPU" 10 80
+                
+        else
+            
+GPU="xf86-video-vesa mesa lib32-mesa"
+dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\n$GPU" 10 80
+            
+        fi
+;;
+   1) inxi -Gx | dialog --no-collapse --cr-wrap --backtitle "Instalación de ArchLinux - https://t.me/ArchLinuxCristo" \
+    --progressbox "-| Driver de Vídeo, lea su información, espere... |-" 15 100; sleep 7
+
+GPUHYBR=false
+
+cmd=(dialog --keep-tite --no-collapse --cr-wrap --backtitle "$titulo" --title "-| Driver de Vídeo |-"  --column-separator "|" --no-tags --ok-label "< Seleccionar >" \
+    --nocancel --menu "Seleciona el driver correcto:" 20 76 16)
+
+options=(1 "Nvidia 440xx|(Linux Stable)"
+         2 "Nvidia 390xx|(Linux Stable)"
+         3 "Nvidia 340xx|(Linux Stable)"
+         4 "Nvidia 440xx|(Linux Stable + Intel)"
+         5 "Nvidia 390xx|(Linux Stable + Intel) No hybrid"
+         6 "Nvidia 440xx|(Linux LTS)"
+         7 "Nvidia 390xx|(Linux LTS)"
+         8 "Nvidia 440xx|(Linux Hardened - Zen)"
+         9 "Nvidia 390xx|(Linux Hardened - Zen)"
+         10 "Nvidia|(Open Source)"
+         11 "AMD - Radeon|(Open Source)"
+         12 "AMD - ATI|(Open Source)"
+         13 "Intel|(Open Source)")
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+
+for choice in $choices
+do
+    case $choice in
+        1)
+            GPU="nvidia nvidia-settings nvidia-utils lib32-nvidia-utils libva-utils \
+            vdpauinfo libvdpau lib32-libvdpau opencl-nvidia \
+            lib32-opencl-nvidia ffnvcodec-headers libxnvctrl clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            ;;
+            
+        2)
+            GPU="nvidia-390xx nvidia-390xx-utils \
+            lib32-nvidia-390xx-utils libva-utils vdpauinfo libvdpau lib32-libvdpau \
+            opencl-nvidia-390xx lib32-opencl-nvidia-390xx clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            #libxnvctrl-390xx
+            #nvidia-390xx-settings
+            ;;
+        
+        3)
+            GPU="nvidia-340xx nvidia-340xx-utils \
+            lib32-nvidia-340xx-utils libva-utils vdpauinfo libvdpau lib32-libvdpau \
+            opencl-nvidia-340xx lib32-opencl-nvidia-340xx clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            #libxnvctrl-340xx
+            #nvidia-340xx-settings
+            ;;
+        
+        4)
+            GPU="nvidia nvidia-settings nvidia-utils lib32-nvidia-utils libva-utils xf86-video-intel optimus-manager bbswitch optimus-manager-qt \
+            vdpauinfo libvdpau lib32-libvdpau opencl-nvidia \
+            lib32-opencl-nvidia ffnvcodec-headers libxnvctrl clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            GPUHYBR=true
+            ;;
+            
+        5)
+            GPU="nvidia-390xx nvidia-390xx-utils xf86-video-intel optimus-manager bbswitch optimus-manager-qt \
+            lib32-nvidia-390xx-utils libva-utils vdpauinfo libvdpau lib32-libvdpau \
+            opencl-nvidia-390xx lib32-opencl-nvidia-390xx clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            GPUHYBR=true
+            ;;
+        
+        6)
+            GPU="nvidia-lts nvidia-settings nvidia-utils lib32-nvidia-utils libva-utils \
+            vdpauinfo libvdpau lib32-libvdpau opencl-nvidia \
+            lib32-opencl-nvidia ffnvcodec-headers libxnvctrl clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            ;;
+        
+        7)
+            GPU="nvidia-390xx-lts nvidia-390xx-utils \
+            lib32-nvidia-390xx-utils libva-utils vdpauinfo libvdpau lib32-libvdpau \
+            opencl-nvidia-390xx lib32-opencl-nvidia-390xx clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            ;;
+        
+        
+        8)
+            GPU="nvidia-dkms nvidia-utils lib32-nvidia-utils libva-utils \
+            vdpauinfo libvdpau lib32-libvdpau opencl-nvidia \
+            lib32-opencl-nvidia ffnvcodec-headers libxnvctrl clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            ;;
+        
+        9)
+            GPU="nvidia-390xx-dkms nvidia-390xx-utils \
+            lib32-nvidia-390xx-utils libva-utils vdpauinfo libvdpau lib32-libvdpau \
+            opencl-nvidia-390xx lib32-opencl-nvidia-390xx clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            ;;        
+            
+        10)
+            GPU="xf86-video-nouveau mesa lib32-mesa mesa-vdpau libva-mesa-driver \
+            lib32-mesa-vdpau lib32-libva-mesa-driver libva-vdpau-driver libvdpau-va-gl \
+            libva-utils vdpauinfo libvdpau lib32-libvdpau opencl-mesa clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            ;;
+        11)
+            GPU="xf86-video-amdgpu mesa lib32-mesa vulkan-radeon \
+            lib32-vulkan-radeon mesa-vdpau libva-mesa-driver lib32-mesa-vdpau \
+            lib32-libva-mesa-driver libva-vdpau-driver libvdpau-va-gl libva-utils vdpauinfo \
+            opencl-mesa clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            ;;
+        12)
+            GPU="xf86-video-ati mesa lib32-mesa mesa-vdpau libva-mesa-driver \
+            lib32-mesa-vdpau lib32-libva-mesa-driver libva-vdpau-driver libvdpau-va-gl \
+            libva-utils vdpauinfo opencl-mesa clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            ;;
+            
+        13)
+            GPU="xf86-video-intel vulkan-intel mesa lib32-mesa intel-media-driver \
+            libva-intel-driver libva-vdpau-driver libvdpau-va-gl libva-utils vdpauinfo \
+            intel-compute-runtime beignet clinfo ocl-icd lib32-ocl-icd opencl-headers"
+            dialog --title "-| Driver de Vídeo |-" --stdout --ok-label "<Aceptar>"  --msgbox "\nyay -Sy $GPU" 10 80
+            ;;
+    esac
+done
+;;
+
+
+
+   255) echo "Presiono la tecla [ESC]"
+;;
+esac
+
+#Final de VIDEO      
+fi
+
+
+
+    ####################################################################
+    
+    
+    
+cmd=(dialog --keep-tite --no-collapse --cr-wrap --backtitle "$titulo" --column-separator "|" --no-tags --ok-label '< Seleccionar >' --nocancel --menu "Selecciona tu (DE) o (WM) a instalar" 9 50 9)
+
+options=(1 "Entorno de escritorio | (DE)"
+         2 "Gestor de ventanas | (WM)")
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+
+for choice in $choices
+do
+    case $choice in
+        1) #INICIO (DE)           
+cmd=(dialog --keep-tite --no-collapse --cr-wrap --backtitle "$titulo" --column-separator "|" --no-tags --ok-label '< Seleccionar >' --nocancel --menu "Selecciona tu escritorio a instalar - (DE)" 19 60 19)
+
+options=(1 " > | xfce4 | Xfce desktop| <"
+         2 " > | plasma | KDE Plasma desktop| <"
+         3 " > | deepin | Deepin desktop| <"
+         4 " > | gnome | GNOME Classic desktop| <"
+         5 " > | gnome-flashback | GNOME 2 desktop| <"
+         6 " > | cinnamon | Cinnamon desktop| <"
+         7 " > | budgie-desktop | Budgie desktop| <"
+         8 " > | enlightenment | Enlightenment desktop| <"
+         9 " > | lxde-gtk3| The Lightweight X11 desktop| <"
+         10 " > | lxde | The Lightweight X11 GTK2| <"
+         11 " > | lxqt | LXDE-Qt y Razor-qt projects| <"
+         12 " > | mate | Mate GTK3 desktop| <"
+         13 " > | liri | Desktop| <"
+         14 " > | lumina | Desktop| <"
+         15 " > | Pantheon | Desktop| <")
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+
+for choice in $choices
+do
+    case $choice in
+        
+###########SELECCION (DE)
+        1) #XFCE4
+
+#cp -rf xfce4/.config/* /root/.config/
+#chmod +777 xfce4
+#chown -hR $nombre_usuario:users /home/$nombre_usuario/.config
+
+#zip -r xfce4.zip .config
+
+xfce4tema=false
+
+cmd=(dialog --keep-tite --backtitle "$titulo" \
+--no-collapse --cr-wrap --column-separator "|" --no-tags --ok-label '< Seleccionar >' --nocancel --menu "Decide en instalar o personalizar las opciones\n\n \
+xfce4 xfce4-goodies network-manager-applet alacarte \n\nSelecciona una opción para XFCE4 \n" 14 60 19)
+
+options=(1 "Predeterminado || Una mejor experiencia con tema"
+         2 "Escritorio vacio || Sin tema con paquetes extras"
+         3 "Personalizar || Especificar Paquetes básicos")
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+
+for choice in $choices
+do
+    case $choice in
+        
+        1)  DE="xfce4 xfce4-goodies network-manager-applet alacarte papirus-icon-theme deepin-icon-theme sierra-gtk-theme-git gnu-free-fonts gnome-font-viewer tumbler ffmpegthumbs ffmpegthumbnailer freetype2 poppler-glib libgsf raw-thumbnailer"
+            DM="lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings light-locker accountsservice"
+            echo lightdm > DMservice
+            xfce4tema=true
+            ;;
+            
+        2)  DE="xfce4 xfce4-goodies network-manager-applet alacarte ttf-hack ttf-inconsolata gnome-font-viewer tumbler ffmpegthumbs ffmpegthumbnailer freetype2 poppler-glib libgsf raw-thumbnailer"
+            DM="lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings light-locker accountsservice"
+            echo $DM | awk -F " " '{print $1}' > DMservice
+            ;;
+            
+        3)  cmd=(dialog --no-collapse --cr-wrap --backtitle "$titulo" --separate-output --column-separator "|" --no-tags --ok-label '< Seleccionar >' --nocancel --checklist "Seleeciona paquetes extras del escritorio XFCE4\n[ ESPACIO ] - Para marcar o desmarcar *" 12 70 19)
+            options=(1 "xfce4-goodies || Programas extras de xfce4" off    # any option can be set to default to "on"
+                     2 "network-manager-applet || Gestionar conexiones de red" off
+                     3 "alacarte || Editar entradas" off)
+            choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+            for choice in $choices
+            do
+                case $choice in
+                    1)
+                        xfce4_2="xfce4-goodies"
+                        ;;
+                    2)
+                        xfce4_3="network-manager-applet"
+                        ;;
+                    3)
+                        xfce4_4="alacarte"
+                        ;;
+                esac
+            done
+            xfce4="xfce4 gnu-free-fonts ttf-hack ttf-inconsolata gnome-font-viewer tumbler ffmpegthumbs ffmpegthumbnailer freetype2 poppler-glib libgsf raw-thumbnailer"
+            DE="$xfce4 $xfce4_2 $xfce4_3 $xfce4_4"
+            DM="lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings light-locker accountsservice"
+            echo $DM | awk -F " " '{print $1}' > DMservice
+            ;;
+    esac
+done
+######FINAL XFCE4
+            ;;
+
+        2)  #KDE
+            cmd=(dialog --keep-tite --backtitle "$titulo" \
+--no-collapse --cr-wrap --column-separator "|" --no-tags --ok-label '< Seleccionar >' --nocancel --menu "Decide en instalar o personalizar las opciones\n\n \
+plasma kdebase discover Menu-Global \n\nSelecciona una opción para Plasma KDE \n" 14 60 19)
+
+options=(1 "Predeterminado || Una mejor experiencia con tema"
+         2 "Escritorio vacio || Sin tema sin paquetes extras"
+         3 "Personalizar || Especificar Paquetes básicos")
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+
+for choice in $choices
+do
+    case $choice in
+        
+        1)  DE="plasma kdebase vlc konsole flameshot appmenu-gtk-module libdbusmenu-glib libdbusmenu-gtk3 libdbusmenu-gtk2 deepin-icon-theme gnu-free-fonts ttf-hack ttf-inconsolata gnome-font-viewer discover packagekit-qt5 colord-kde kscreen powerdevil kdegraphics-thumbnailers ffmpegthumbs ffmpegthumbnailer freetype2 poppler-glib libgsf raw-thumbnailer user-manager kdeconnect sshfs ttf-liberation ttf-dejavu qt5ct"
+            DM="sddm libxcb qt5-virtualkeyboard"
+            echo sddm > DMservice
+            plasmatema=true
+            ;;
+            
+        2)  DE="plasma kdebase konsole gnu-free-fonts ttf-hack discover"
+            DM="sddm libxcb qt5-virtualkeyboard"
+            echo sddm > DMservice
+            ;;
+            
+        3)  cmd=(dialog --no-collapse --cr-wrap --backtitle "$titulo" --separate-output --column-separator "|" \
+            --no-tags --ok-label '< Seleccionar >' --nocancel --checklist "Seleeciona paquetes del escritorio KDE\n[ ESPACIO ] - Para marcar o desmarcar *" 15 70 19)
+            options=(1 "kde-applications || Programas extras de KDE" off 
+                     2 "appmenu-gtk || Global Menu GTK2/GTK3" off
+                     3 "bluedevil || Bluetooth" off
+                     4 "print-manager || Impresoras" off
+                     5 "latte-dock || Dock Plasma" off
+                     6 "discover || Tienda KDE" off)
+            
+            choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+            clear
+            for choice in $choices
+            do
+                case $choice in
+                    1)
+                        KDE2="kde-applications"
+                        ;;
+                    2)
+                        KDE3="appmenu-gtk-module libdbusmenu-glib libdbusmenu-gtk3 libdbusmenu-gtk2"
+                        ;;
+                    3)
+                        KDE4="bluedevil"
+                        ;;
+                    4)
+                        KDE5="print-manager cups"
+                        ;;
+                    5)
+                        KDE6="latte-dock"
+                        ;;
+                    6)
+                        KDE7="discover"
+                        ;;
+                esac
+            done
+
+            KDE="plasma kdebase gnu-free-fonts ttf-hack ttf-inconsolata gnome-font-viewer discover packagekit-qt5 colord-kde kscreen powerdevil kdegraphics-thumbnailers ffmpegthumbs ffmpegthumbnailer freetype2 poppler-glib libgsf raw-thumbnailer user-manager kdeconnect sshfs ttf-liberation ttf-dejavu qt5ct"
+
+            DE="$KDE $KDE2 $KDE3 $KDE4 $KDE5 $KDE6 $KDE7"            
+            DM="sddm libxcb qt5-virtualkeyboard"
+            echo sddm > DMservice
+            ;;
+    esac
+done
+######FINAL KDE PLASMA
+           ;;
+
+
+        3) #DEEPIN
+            cmd=(dialog --no-collapse --cr-wrap --backtitle "$titulo" --separate-output --column-separator "|" --no-tags --ok-label '< Seleccionar >' \
+                --nocancel --checklist "Seleeciona paquetes del escritorio Deepin\n[ ESPACIO ] - Para marcar o desmarcar *" 14 100 19)
+            options=(2 "> deepin-topbar" off
+                     3 "> deepin-dock-plugin-arch-update" off
+                     4 "> deepin-dock-plugin-cmdu-git" off
+                     5 "> deepin-dock-plugin-netspeedandsysteminfo" off
+                     6 "> deepin-dock-plugin-pineappledatetime-git" off
+                     7 "> deepin-dock-plugin-weather-git" off)
+            choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+            clear
+            for choice in $choices
+            do
+                case $choice in
+
+                    2)
+                        deepin2="deepin-topbar"
+                        ;;
+                    3)
+                        deepin3="deepin-dock-plugin-arch-update"
+                        ;;
+                    4)
+                        deepin4="deepin-dock-plugin-cmdu-git"
+                        ;;
+                    5)
+                        deepin5="deepin-dock-plugin-netspeedandsysteminfo"
+                        ;;
+                    6)
+                        deepin6="deepin-dock-plugin-pineappledatetime-git"
+                        ;;
+                    7)
+                        deepin7="deepin-dock-plugin-weather-git"
+                        ;;
+                esac
+            done
+
+            deepin="deepin deepin-extra gnu-free-fonts ttf-hack ttf-inconsolata gnome-font-viewer ffmpegthumbs ffmpegthumbnailer freetype2 poppler-glib libgsf raw-thumbnailer"
+            DE="$deepin $deepin1 $deepin2 $deepin3 $deepin4 $deepin5 $deepin6 $deepin7"
+
+            DM="lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings light-locker accountsservice"
+            echo lightdm > DMservice
+            
+            ;;
+######FINAL DEEPIN
+
+        4)  #INICIO GNOME
+            DE="gnome gnome-shell gnome-tweaks tumbler ffmpegthumbs ffmpegthumbnailer freetype2 poppler-glib libgsf raw-thumbnailer"
+            DM="gdm"
+            echo gdm > DMservice
+            ;;
+        
+        5)  #INICIO GNOME flashback
+            DE="gnome-flashback gnome-applets sensors-applet gnome-shell"
+            DM="gdm"
+            echo gdm > DMservice
+            ;;
+            
+        6) #INICIO cinnamon
+            DE="cinnamon cinnamon-translations xed xviewer xreader xplayer pix"
+            DM="gdm"
+            echo -e "exec cinnamon-session" > /home/$nombre_usuario/.xinitrc
+            echo gdm > DMservice
+            ;;
+
+        7) #INICIO budgie-desktop
+            DE="budgie-desktop gnome gnome-shell gnome-control-center dconf-editor"
+            DM="gdm"
+            echo -e "export XDG_CURRENT_DESKTOP=Budgie:GNOME\nexec budgie-desktop" > /home/$nombre_usuario/.xinitrc
+            echo gdm > DMservice
+            ;;
+
+        8)  DE="enlightenment entrance-git terminology network-manager-applet eluminance-git ephoto stalonetray"
+            echo -e "exec enlightenment_start" > /home/$nombre_usuario/.xinitrc
+            echo entrance > DMservice
+            ;;
+            
+        9) #INICIO lxde-gtk3
+            DE="lxde-gtk3 lxde-common lxsession openbox lxmed"
+            DM="lxdm-gtk3"
+            echo -e "exec startlxde" > /home/$nombre_usuario/.xinitrc
+            echo lxdm > DMservice
+            ;;
+            
+        10) #INICIO lxde
+            DE="lxde lxde-common lxsession openbox lxmed"
+            DM="lxdm"
+            echo -e "exec startlxde" > /home/$nombre_usuario/.xinitrc
+            echo lxdm > DMservice
+            ;;
+            
+        11) #INICIO lxqt
+            DE="lxqt breeze-icons oxygen-icons lxqt-connman-applet slock xdg-utils-slock"
+            DM="sddm sddm-config-editor-git qt5-virtualkeyboard libxcb"
+            echo -e "exec startlxqt" > /home/$nombre_usuario/.xinitrc
+            echo sddm > DMservice
+            ;;
+        
+        12) #INICIO mate
+            DE="mate mate-extra mate-media mate-menu brisk-menu marco mate-themes libcanberra-pulse mate-panel mate-session-manager mate-screensaver mate-applet-dock mate-applet-streamer mate-power-manager network-manager-applet system-config-printer eom engrampa"
+            DM="lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings light-locker accountsservice"
+            echo -e "exec mate-session" > /home/$nombre_usuario/.xinitrc
+            echo lightdm > DMservice
+            ;;
+        
+        13) #INICIO Liri
+            DE="liri-git-meta network-manager-applet"
+            DM="lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings light-locker accountsservice"
+            echo -e "exec liri-session" > /home/$nombre_usuario/.xinitrc
+            echo lightdm > DMservice
+            ;;
+        14) #INICIO lumina
+            DE="lumina-desktop-git network-manager-applet"
+            DM="lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings light-locker accountsservice"
+            echo -e "exec start-lumina-desktop" > /home/$nombre_usuario/.xinitrc
+            echo lightdm > DMservice
+            ;;
+        15) #INICIO Pantheon
+            DE="pantheon-session-git pantheon-terminal network-manager-applet wingpanel-git plank pantheon-default-settings-git pantheon-polkit-agent-git pantheon-files"
+            DM="lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings light-locker accountsservice"
+            echo -e "exec cerbere" > /home/$nombre_usuario/.xinitrc
+            echo lightdm > DMservice
+            ;;
+
+    esac
+done
+#FIN ESCRITORIO
+            ;;
+        2) #INICIO (WM)
+i3tema=false
+
+cmd=(dialog --keep-tite --backtitle "$titulo" \
+--no-collapse --cr-wrap --column-separator "|" --no-tags --ok-label '< Seleccionar >' --nocancel --menu "Selecciona tu gestor de ventana a instalar - (WM)" 19 55 16)
+
+options=(1 "> i3wm | 150MB de RAM "
+         2 "> qtile | Disponible <"
+         3 "> cwm | Aún no disponible <" 
+         4 "> fluxbox | Aún no disponible <"
+         5 "> openbox | Aún no disponible <"
+         6 "> blackbox | Aún no disponible <"
+         7 "> Bspwm | Aún no disponible <"
+         8 "> awesome | Aún no disponible <"
+         9 "> dwm | Aún no disponible <"
+         10 "> catwm | Aún no disponible <"
+         11 "> 2bwm | Aún no disponible <"
+         12 "> xmonad | Aún no disponible <")
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+
+for choice in $choices
+do
+    case $choice in
+        1)  # zip -r i3.zip .config
+
+            cmd=(dialog --keep-tite --backtitle "$titulo" \
+            --no-collapse --cr-wrap --column-separator "|" --no-tags --ok-label '< Seleccionar >' --nocancel --menu "Cualquier elección trae por defecto:\n> i3-gaps i3blocks i3lock dmenu ly-git rxvt \n\nSelecciona una opción para i3wm \n" 14  73 19)
+
+            options=(1 "Predeterminado || Con Tema || i3-gaps + i3status"
+                     2 "Predeterminado || Con Tema || i3-gaps + bumblebee-status"
+                     3 "Escritorio vacio || Sin Tema || Incluye todo lo minimo para i3wm")
+
+            choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+
+            for choice in $choices
+            do
+                case $choice in
+                    
+                    1)  i3wm="i3-gaps i3blocks i3lock i3status dmenu rofi rxvt-unicode"
+                        i3wm1="tumbler ffmpegthumbs ffmpegthumbnailer raw-thumbnailer freetype2"
+                        i3wm2="network-manager-applet polkit-gnome gnome-keyring lxappearance"
+                        i3wm3="ttf-hack gnu-free-fonts awesome-terminal-fonts"
+                        i3wm4="papirus-icon-theme gnome-themes-extra"
+                        i3wm5="thunar alacritty feh xclip maim"
+                        i3wm6="tk compton-tryone-git i3lock-fancy-git"
+                        WM="$i3wm $i3wm1 $i3wm2 $i3wm3 $i3wm4 $i3wm5 $i3wm6"
+                        DM="ly-git"
+                        echo ly > DMservice
+                        i3tema1=true
+                        # twmn deepin-screenshot-copy-patch xclip
+                        ;;
+
+
+                    2)  i3wm="i3-gaps i3blocks i3lock dmenu rofi rxvt-unicode"
+                        i3wm1="tumbler ffmpegthumbs ffmpegthumbnailer raw-thumbnailer freetype2"
+                        i3wm2="network-manager-applet polkit-gnome gnome-keyring lxappearance"
+                        i3wm3="ttf-hack gnu-free-fonts awesome-terminal-fonts"
+                        i3wm4="papirus-icon-theme gnome-themes-extra"
+                        i3wm5="thunar alacritty feh xclip maim"
+                        i3wm6="bumblebee-status tk compton-tryone-git i3lock-fancy-git"
+                        WM="$i3wm $i3wm1 $i3wm2 $i3wm3 $i3wm4 $i3wm5 $i3wm6"
+                        DM="ly-git"
+                        echo ly > DMservice
+                        i3tema2=true
+                        # twmn deepin-screenshot-copy-patch xclip
+                        ;;
+                        
+                        
+                    3)  WM="i3-gaps i3blocks i3lock i3status dmenu ly-git rxvt-unicode gnome-themes-extra"
+                        DM="ly-git"
+                        echo ly > DMservice
+                        ;;
+                        
+                esac
+            done
+            ;;
+
+        2)
+            WM="qtile python python2 thunar alacritty network-manager-applet polkit-gnome gnome-keyring lxappearance ly-git rxvt-unicode gnome-themes-extra"
+            DM="ly-git"
+            echo ly > DMservice
+            qtile_config=true
+            ;;
+        3)
+            echo "Third Option"
+            ;;
+        4)
+            echo "Fourth Option"
+            ;;
+    esac
+done
+#FINAL (WM)
+            ;;
+    esac
+done
+
+#AUDIO
+cmd=(dialog --no-collapse --cr-wrap --title "-| Audio del Sistema |-" --backtitle "$titulo" \
+--no-tags --ok-label '< Siguiente >' --nocancel --menu "\nPulseAudio es para el usuario tradicional \
+\nJack Audio es para Profesionales sin latencia \
+\nAlsa Audio es para terminal sin Interfaz Gráfica\n " 14 70 20)
+options=(1 "Pulseaudio + Códecs de audio"   
+         2 "Jack2      + Códecs de audio"
+         3 "ALSA       + Códecs de audio")
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+clear
+for choice in $choices
+do
+    case $choice in
+        1)
+            AUDIO1="pulseaudio pulseaudio-alsa pavucontrol pamixer \
+            pulseaudio-equalizer lib32-alsa-plugins lib32-libpulse pulseaudio-equalizer-ladspa"
+            #https://wiki.archlinux.org/index.php/PulseAudio
+            #pulseeffects libcanberra-pulse libcanberra-gstreamer
+            ;;
+        2)
+            AUDIO2="realtime-privileges jack2 lib32-jack2 a2jmidid libffado python-dbus waf pro-audio lv2-plugins ladspa-plugins dssi-plugins vst-plugins"
+            #https://wiki.archlinux.org/index.php/Professional_audio
+            ;;
+        3)
+            AUDIO3="alsa-utils alsa-plugins alsa-oss alsa-firmware pamixer"
+            #https://wiki.archlinux.org/index.php/Advanced_Linux_Sound_Architecture
+            ;;
+                   
+    esac
+done
+AUDIO=" $AUDIO1 $AUDIO2 $AUDIO3 "
+
+#FIN_AUDIO
+
+
+
+#UTILIDADES
+cmd=(dialog --no-collapse --cr-wrap --backtitle "$titulo"  \
+--no-tags --ok-label '< Siguiente >' --cancel-label '< No deseo esto >' --checklist "Utilidades para tu sistema\n[ ESPACIO ] - Para marcar o desmarcar *" 15 70 20)
+options=(1 "Lectura y formateo de discos incluido Android" on    # any option can be set to default to "on"
+         2 "Compresión y Descompresión de archivos" on
+         3 "Códecs de video, lectura de todos los formatos de vídeo" off
+         4 "gufw - Firewall de red" off
+         5 "hardinfo - Información del sistema y benchmark" off
+         6 "gnome-disk-utility - Administrador de Discos" off
+         7 "gparted - Administrador de Discos" off)
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+clear
+for choice in $choices
+do
+    case $choice in
+        1)
+            UTIL1="android-file-transfer android-tools android-udev msmtp libmtp \
+                libcddb gvfs gvfs-afc gvfs-smb gvfs-gphoto2 gvfs-mtp gvfs-goa gvfs-nfs gvfs-google gst-libav \
+                dosfstools jfsutils f2fs-tools btrfs-progs exfat-utils ntfs-3g \
+                reiserfsprogs udftools xfsprogs nilfs-utils polkit gpart mtools cifs-utils"
+            ;;
+        2)
+            UTIL2="xarchiver unarchiver binutils gzip lha lrzip lzip lz4 p7zip tar xz \
+                bzip2 p7zip lbzip2 arj lzop cpio unrar unzip zstd zip lzip unarj zstd"
+            ;;
+        3)
+            UTIL3="ffmpeg aom libde265 x265 x264 libmpeg2 xvidcore libtheora libvpx \
+                schroedinger sdl gstreamer gst-plugins-bad gst-plugins-base gst-plugins-base-libs \
+                gst-plugins-good gst-plugins-ugly xine-lib libdvdcss libdvdread dvd+rw-tools lame \
+                jasper libmng libraw libkdcraw vcdimager"
+            ;;
+        4)
+            UTIL4="gufw"
+            ;;
+        
+        5)
+            UTIL5="hardinfo"
+            ;;
+
+        6)
+            UTIL6="gnome-disk-utility"
+            ;;
+               
+        7)
+            UTIL7="gparted"
+            ;;   
+    esac
+done
+UTIL=" $UTIL1 $UTIL2 $UTIL3 $UTIL4 $UTIL5 $UTIL6 $UTIL7 "
+#FINAL DE UTILIDADES
+
+
+
+#TIPOGRAFIAS
+FONT=" gnu-free-fonts ttf-opensans ttf-hack ttf-font-awesome awesome-terminal-fonts noto-fonts-emoji adobe-source-han-sans-jp-fonts adobe-source-han-sans-cn-fonts gnome-font-viewer "
+# FIN TIPOGRAFIAS
+
+
+
+
+#REPRODUCTOR
+sporitykey=false
+
+cmd=(dialog --no-collapse --cr-wrap --backtitle "$titulo" --separate-output --column-separator "|" \
+--no-tags --ok-label '< Siguiente >' --cancel-label '< No deseo esto >' \
+--title "-| Reproductores Video y Audio |-" --checklist "\n[ ESPACIO ] - Para marcar o desmarcar *" 19 100 19)
+options=(   1 "vlc" on
+            2 "mpv" off
+            3 "mplayer" off
+            4 "nuclear-player-bin" off            
+            5 "elisa" off
+            6 "spotify" off
+            7 "clementine" off
+            8 "audacious" off
+            9 "xplayer" off
+            10 "rhythmbox" off
+            11 "moc" off
+            12 "cmus" off)
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+clear
+for choice in $choices
+do
+    case $choice in
+        1)
+            REPRO1="vlc"
+            REPRO_condicion=true
+            ;;
+        2)
+            REPRO2="mpv"
+            REPRO_condicion=true
+            ;;
+        3)
+            REPRO3="mplayer"
+            REPRO_condicion=true
+            ;;
+        4)
+            REPRO4="nuclear-player-bin"
+            REPRO_condicion=true
+            ;;
+        5)
+            REPRO5="elisa"
+            REPRO_condicion=true
+            ;;
+        6)
+            REPRO6="spotify"
+            printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' "_"
+            echo -e ""
+            echo -e "\t\t\t         Actualizando          "
+            printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' _
+            echo -e ""
+            gpg --recv-keys 931FF8E79F0876134EDDBDCCA87FF9DF48BF1C90
+            gpg --recv-keys 2EBF997C15BDA244B6EBF5D84773BD5E130D1D45
+            REPRO_condicion=true
+            ;;
+        7)
+            REPRO7="clementine"
+            REPRO_condicion=true
+            ;;
+        8)
+            REPRO8="audacious"
+            REPRO_condicion=true
+            ;;
+        9)
+            REPRO9="xplayer"
+            REPRO_condicion=true
+            ;;
+        10)
+            REPRO10="rhythmbox"
+            REPRO_condicion=true
+            ;;
+        11)
+            REPRO11="moc"
+            REPRO_condicion=true
+            ;;
+        12)
+            REPRO12="cmus"
+            REPRO_condicion=true
+            ;;
+    esac
+done
+REPRO=" $REPRO1 $REPRO3 $REPRO4 $REPRO5 $REPRO6 $REPRO7 $REPRO8 $REPRO9 $REPRO10 $REPRO11 $REPRO12 "
+# FIN REPRODUCTOR
+
+
+#NAVEGADORES
+cmd=(dialog --no-collapse --cr-wrap --backtitle "$titulo" --separate-output --column-separator "|" \
+--no-tags --ok-label '< Siguiente >' --cancel-label '< No deseo esto >' --checklist "Seleeciona tu navegador web\n[ ESPACIO ] - Para marcar o desmarcar *" 14 100 19)
+options=(1 "Firefox | Open source" on    # any option can be set to default to "on"
+         2 "Chromium | Open source" off
+         3 "Brave | AUR - Open source" off
+         4 "Google Chrome | AUR - Proprietary browser" off         
+         5 "Opera | Proprietary browser" off
+         6 "Vivaldi | AUR - Proprietary browser" off)
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+clear
+for choice in $choices
+do
+    case $choice in
+        1)
+            WEB1="firefox"
+            WEB_condicion=true
+            ;;
+        2)
+            WEB2="chromium"
+            WEB_condicion=true
+            ;;
+        3)
+            WEB3="brave-bin"
+            WEB_condicion=true
+            ;;
+        4)
+            WEB4="google-chrome"
+            WEB_condicion=true
+            ;;
+        5)
+            WEB5="opera"
+            WEB_condicion=true
+            ;;
+        6)
+            WEB6="vivaldi"
+            WEB_condicion=true
+            ;;
+    esac
+done
+WEB=" $WEB1 $WEB2 $WEB3 $WEB4 $WEB5 $WEB6 "
+# FIN NAVEGADORES
+
+
+
+
+
+
+
+
+#OFFICE
+cmd=(dialog --no-collapse --cr-wrap --backtitle "$titulo" --separate-output --column-separator "|" \
+--no-tags --ok-label '< Siguiente >' --cancel-label '< No deseo esto >' --checklist "Suite de Ofimática\n[ ESPACIO ] - Para marcar o desmarcar *" 11 70 14)
+options=(    1 "LibreOffice | libreoffice-fresh" on
+             2 "WPS Office | AUR - wps-office" off
+             3 "SoftMaker Office | AUR - freeoffice " off)
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+clear
+for choice in $choices
+do
+    case $choice in
+        1)
+            OFFICE1="libreoffice-fresh libreoffice-fresh-es hunspell hunspell-es_es hunspell-es_any hyphen hyphen-es mythes-es"
+            OFFICE_condicion=true
+            ;;
+        2)
+            OFFICE3="wps-office ttf-wps-fonts wps-office-mui-es-es hunspell hunspell-es_es hunspell-es_any"
+            OFFICE_condicion=true
+            ;;
+        3)
+            OFFICE4="freeoffice hunspell hunspell-es_es hunspell-es_any hyphen hyphen-es mythes-es"
+            OFFICE_condicion=true
+            ;;
+    esac
+done
+OFFICE=" $OFFICE1 $OFFICE2 $OFFICE3 "
+# FIN OFFICE
+
+
+
+
+#Administrador de Procesos
+cmd=(dialog --no-collapse --cr-wrap --backtitle "$titulo"  --title "-| Administrador de Procesos |-" \
+--no-tags --ok-label '< Siguiente >' --cancel-label '< No deseo esto >' --checklist "\n[ ESPACIO ] - Para marcar o desmarcar *\n " 15 70 20)
+options=(1 "gnome-system-monitor" on
+         2 "htop" on
+         3 "gotop - AUR" off
+         4 "gtop" off
+         5 "bashtop" off)
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+clear
+for choice in $choices
+do
+    case $choice in
+        1)
+            AP1="gnome-system-monitor"
+            AP_condicion=true
+            ;;
+        2)
+            AP2="htop"
+            AP_condicion=true
+            ;;
+        3)
+            AP3="gotop"
+            AP_condicion=true
+            ;;
+        4)
+            AP4="gtop"
+            AP_condicion=true
+            ;;
+
+        5)
+            AP5="bashtop"
+            AP_condicion=true
+            ;;
+            
+            
+    esac
+done
+AP=" $AP1 $AP2 $AP3 $AP4 $AP5 "
+#FINAL DE Administrador de Procesos
+
+
+#Redes Sociales
+cmd=(dialog --no-collapse --cr-wrap --backtitle "$titulo"  --title "-| Redes Sociales |-" \
+--no-tags --ok-label '< Siguiente >' --column-separator "|" --cancel-label '< No deseo esto >' --checklist "\n[ ESPACIO ] - Para marcar o desmarcar *\n " 15 70 20)
+options=(1 "Telegram | telegram-desktop" on
+         2 "IGdm - AUR | App de chat de Instagram" off
+         3 "Whatsapp - AUR | whatsapp-nativefier-dark" off
+         4 "Facebook Messenger - AUR | caprine" off
+         5 "Netflix - AUR | netflix-qdesktop" off
+         6 "Skype - AUR | skypeforlinux-preview-bin" off)
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+clear
+for choice in $choices
+do
+    case $choice in
+        1)
+            RS1="telegram-desktop aspell-es"
+            RS_condicion=true
+            ;;
+        2)
+            RS2="igdm-bin aspell-es"
+            RS_condicion=true
+            ;;
+        3)
+            RS3="whatsapp-nativefier-dark aspell-es"
+            RS_condicion=true
+            ;;
+        4)
+            RS4="caprine aspell-es"
+            RS_condicion=true
+            ;;    
+        5)
+            RS5="netflix-qdesktop aspell-es"
+            RS_condicion=true
+            ;;            
+        6)
+            RS6="skypeforlinux-preview-bin aspell-es"
+            RS_condicion=true
+            ;;
+            
+    esac
+done
+RS=" $RS1 $RS2 $RS3 $RS4 $RS5 $RS6 "
+#FINAL DE Redes Sociales
+
+nombre_usuario=$(cat /etc/passwd | grep '/home' | cut -d: -f1)
+#SH
+cmd=(dialog --no-collapse --cr-wrap --title "-| SHELL del Sistema |-" --backtitle "$titulo" \
+--no-tags --ok-label '< Siguiente >' --nocancel --menu "\nSeleccione\n " 15 70 20)
+options=(1 "zsh"   
+         2 "bash"
+         3 "dash"
+         4 "fish"
+         5 "mksh"
+         6 "tcsh")
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+clear
+for choice in $choices
+do
+    case $choice in
+        1)
+            SH="zsh zsh-completions zsh-syntax-highlighting"
+            cp /root/zshrc /home/$nombre_usuario/.zshrc
+            cp /root/zshrc /root/.zshrc
+            ;;
+
+        2)
+            SH="bash bash-completion autojump command-not-found"
+            cp /root/bashrc /home/$nombre_usuario/.bashrc
+            ;;
+        3)
+            SH="dash";;
+            
+        4)
+            SH="fish";;
+            
+        5)
+            SH="mksh";;
+            
+        6)
+            SH="tcsh";;
+                                                
+    esac
+done
+#FIN_SH
+
+
+aurherlp=false
+
+dialog --title "-| AUR Helper |-" --backtitle "$titulo" --yesno "\n¿Desea un asistente para hacer descargas en Arch User Repository?" 7 70
+
+case $? in
+   0) #AUR
+cmd=(dialog --no-collapse --cr-wrap --backtitle "$titulo"  --title "-| AUR Helper |-" \
+--no-tags --ok-label '< Siguiente >' --column-separator "|" --cancel-label '< No deseo esto >' --checklist "\n[ ESPACIO ] - Para marcar o desmarcar *\n " 20 80 20)
+options=(1 "yay | Terminal" on
+         2 "trizen | Terminal" off
+         3 "pikaur | Terminal" off
+         4 "aurman | Terminal" off
+         5 "pakku | Terminal" off
+         6 "Pamac | Graphical" off
+         7 "Octopi | Graphical" off
+         8 "Cylon | Graphical" off
+         9 "Argon | Graphical" off
+         10 "Pakku GUI | Graphical" off)
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+clear
+for choice in $choices
+do
+    case $choice in
+        1)
+            AUR1="yay-bin"
+            AUR_condicion=true
+            ;;
+        2)
+            AUR2="trizen"
+            AUR_condicion=true
+            ;;
+        3)
+            AUR3="pikaur"
+            AUR_condicion=true
+            ;;
+        4)
+            AUR4="aurman"
+            AUR_condicion=true
+            ;;    
+        5)
+            AUR5="pakku"
+            AUR_condicion=true
+            ;;            
+        6)
+            AUR6="pamac-aur pamac-tray-appindicator pamac-zsh-completions"
+            AUR_condicion=true
+            AUR_pamac=true
+            ;;
+        7)
+            AUR7="octopi"
+            AUR_condicion=true
+            ;; 
+        8)
+            AUR8="cylon"
+            AUR_condicion=true
+            ;;
+        9)
+            AUR9="argon"
+            AUR_condicion=true
+            ;; 
+        10)
+            AUR10="pakku-gui"
+            AUR_condicion=true
+            ;; 
+
+    esac
+done
+AUR=" $AUR1 $AUR2 $AUR3 $AUR4 $AUR5 $AUR6 $AUR7 $AUR8 $AUR9 $AUR10 "
+#FINAL DE AUR
+;;
+   1) AUR_DELETE="yay-bin"
+        aurherlp=true
+        ;;
+
+   255) echo "[ESC] key pressed.";;
+esac
+
+
+clear
+#  pacman -Sy archlinux-keyring --noconfirm | dialog --no-collapse --cr-wrap --backtitle "Instalación de ArchLinux - https://t.me/ArchLinuxCristo" --progressbox "| Claves Actualizadas, Espere... |" 27 100; sleep 3
+
+# sed -i '100d' /etc/pacman.conf
+# sed -i '99d' /etc/pacman.conf
+# sed -i '98d' /etc/pacman.conf
+
+nombre_usuario=$(cat /etc/passwd | grep '/home' | cut -d: -f1)
+
+# Funcion para barra de progreso
+
+function barra_progreso {
+
+clear    
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' "_"
+echo -e ""
+echo -e "\t\t\t\t$titulo_progreso"
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' _
+echo -e ""
+
+#INICIO PROGRESS BARR
+function ProgressBar {
+    let _progress=(${1}*100/${2}*100)/100
+    let _done=(${_progress}*6)/10
+    let _left=60-$_done
+    _fill=$(printf "%${_done}s")
+    _empty=$(printf "%${_left}s")
+# 1.2.1.1 Progreso : [########################################] 100%
+printf "\r > Cargando : |${_fill// /▇}${_empty// /-}| ${_progress}%%"
+
+}
+# Variables
+_start=1
+
+_end=100
+
+for number in $(seq ${_start} ${_end})
+do
+    sleep 0.065
+    ProgressBar ${number} ${_end}
+done
+#FIN PROGRESS BARR
+echo ""
+echo ""
+}
+
+
+function mensaje_install {
+echo ""
+echo ""
+echo -e '\033[38;2;255;0;02m'
+echo " █████╗ ██████╗  ██████╗██████╗ ██╗███████╗";
+echo "██╔══██╗██╔══██╗██╔════╝██╔══██╗██║██╔════╝";
+echo "███████║██████╔╝██║     ██████╔╝██║███████╗";
+echo "██╔══██║██╔══██╗██║     ██╔══██╗██║╚════██║";
+echo "██║  ██║██║  ██║╚██████╗██║  ██║██║███████║";
+echo "╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝╚══════╝";
+echo "                                           ";
+echo -e '\033[m'
+echo ""
+echo ""
+sleep 5
+}
+
+
+titulo_progreso="Actualizando el sistema"
+barra_progreso
+pacman -Syu && mensaje_install
+
+titulo_progreso="Instalando Xorg"
+barra_progreso
+sudo -u $nombre_usuario yay -S $XORG --noeditmenu --noconfirm --needed && mensaje_install
+
+
+titulo_progreso="Instalando DE/WM/DM"
+barra_progreso
+sudo -u $nombre_usuario yay -S $DE gedit viewnior --noeditmenu --noconfirm --needed
+sudo -u $nombre_usuario yay -S $WM gedit viewnior --noeditmenu --noconfirm --needed
+sudo -u $nombre_usuario yay -S $DM --noeditmenu --noconfirm --needed
+clear
+echo -e ""
+echo -e "\t\t\t\tActivando Servicio Display Manager"
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' _
+echo -e ""
+systemctl enable $(cat DMservice) && mensaje_install
+
+
+titulo_progreso="Instalando Utilidades del Sistema"
+barra_progreso
+sudo -u $nombre_usuario yay -S $UTIL --noeditmenu --noconfirm --needed && mensaje_install
+
+
+titulo_progreso="Instalando Sistema de Audio"
+barra_progreso
+sudo -u $nombre_usuario yay -S $AUDIO --noeditmenu --noconfirm --needed && mensaje_install 
+
+
+titulo_progreso="Instalando Sistema de Vídeo"
+barra_progreso
+sudo -u $nombre_usuario yay -S $GPU --noeditmenu --noconfirm --needed && mensaje_install
+
+
+titulo_progreso="Instalando Shell del Sistema"
+barra_progreso
+sudo -u $nombre_usuario yay -S $SH --noeditmenu --noconfirm --needed && mensaje_install
+
+
+titulo_progreso="Instalando Tipografias"
+barra_progreso
+sudo -u $nombre_usuario yay -S $FONT --noeditmenu --noconfirm --needed && mensaje_install
+
+
+
+if [ "$WEB_condicion" == "true" ]; then
+titulo_progreso="Instalando navegador Web"
+barra_progreso
+sudo -u $nombre_usuario yay -S $WEB --noeditmenu --noconfirm --needed && mensaje_install
+    fi
+
+
+if [ "$REPRO_condicion" == "true" ]; then
+titulo_progreso="Instalando Reproductor de Música/Vídeo"
+barra_progreso
+sudo -u $nombre_usuario yay -S $REPRO --noeditmenu --noconfirm --needed && mensaje_install
+    fi
+
+
+if [ "$OFFICE_condicion" == "true" ]; then
+titulo_progreso="Instalando Ofimatica"
+barra_progreso
+sudo -u $nombre_usuario yay -S $OFFICE --noeditmenu --noconfirm --needed && mensaje_install
+    fi
+
+
+if [ "$AP_condicion" == "true" ]; then
+titulo_progreso="Instalando Administrador de Procesos"
+barra_progreso
+sudo -u $nombre_usuario yay -S $AP --noeditmenu --noconfirm --needed && mensaje_install
+    fi
+
+
+if [ "$RS_condicion" == "true" ]; then
+titulo_progreso="Instalando Social Media"
+barra_progreso
+sudo -u $nombre_usuario yay -S $RS --noeditmenu --noconfirm --needed && mensaje_install
+    fi
+
+
+if [ "$AUR_condicion" == "true" ]; then
+titulo_progreso="Instalando AUR Helper"
+barra_progreso
+sudo -u $nombre_usuario yay -S $AUR --noeditmenu --noconfirm --needed && mensaje_install
+    fi
+
+
+if [ "$AUR_pamac" == "true" ]; then
+clear
+echo ""
+echo "###############################################################################"
+echo "###                  Author    :   Erik Dubois                             ####"
+echo "###                  Ver Iconos en Pamac                                   ####"
+echo "###############################################################################"
+sleep 2
+# https://aur.archlinux.org/packages/pamac-aur/
+echo "Fix to show icons and applications in pamac-aur"
+echo "Downgrading is another solution - see forum for that one"
+
+zcat /usr/share/app-info/xmls/community.xml.gz | sed 's|<em>||g;s|<\/em>||g;' | gzip > "/tmp/new.xml.gz"
+cp /tmp/new.xml.gz /usr/share/app-info/xmls/community.xml.gz
+pacman -S appstream --noconfirm --needed
+appstreamcli refresh-cache --force
+mensaje_install
+sleep 8
+    fi
+
+
+
+#    AUR_condicion=true
+# mkdir /home/$nombre_usuario/.config/  
+
+if [ "$GPUHYBR" == "true" ]; then
+systemctl enable optimus-manager.service
+optimus-manager --switch auto
+optimus-manager --set-startup intel
+    fi
+    
+
+if [ "$VMbox" == "true" ]; then
+modprobe -a vboxguest vboxsf vboxvideo vboxdrv
+VBoxClient-all
+systemctl enable $(cat GPUvirt)
+    fi
+
+    
+if [ "$VMqemu" == "true" ]; then
+systemctl enable $(cat GPUvirt)
+    fi
+
+
+
+# TEMAS
+
+if [ "$xfce4tema" == "true" ]; then
+#TITULO EN BARRAS
+titulo_progreso="Instalando Tema de XFCE4"
+barra_progreso
+
+git clone https://github.com/CodigoCristo/config.git
+unzip config/xfce4.zip
+mkdir /home/$nombre_usuario/.config/
+clear    
+echo -e ""
+echo -e "\t\t\t\tInstalando Tema de XFCE4"
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' _
+echo -e ""
+cp -rf .config/* /home/$nombre_usuario/.config/
+cp -rf .config/5336864_orig.png /usr/usb.png
+cp -rf .config/logo2.png /usr/logo-arch.png
+cp -rf .config/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf
+rm -R config/
+chown -hR $nombre_usuario:users /home/$nombre_usuario/
+chown -hR $nombre_usuario:users /home/$nombre_usuario/.config/
+sleep 5
+    fi
+
+
+if [ "$i3tema1" == "true" ]; then
+#TITULO EN BARRAS
+titulo_progreso="Instalando Tema de i3WM"
+barra_progreso
+
+mkdir /home/$nombre_usuario/.config
+
+wget https://raw.githubusercontent.com/CodigoCristo/config/master/i3-1.zip
+unzip i3-1.zip
+cp -rf i3-1/config/* /home/$nombre_usuario/.config/
+rm -R i3-1/
+rm -R i3-1.zip
+chown -hR $nombre_usuario:users /home/$nombre_usuario/
+chown -hR $nombre_usuario:users /home/$nombre_usuario/.config/
+sleep 5
+    fi
+
+if [ "$i3tema2" == "true" ]; then
+#TITULO EN BARRAS
+titulo_progreso="Instalando Tema de i3WM"
+barra_progreso
+
+mkdir /home/$nombre_usuario/.config
+
+wget https://raw.githubusercontent.com/CodigoCristo/config/master/i3-2.zip
+unzip i3-2.zip
+cp -rf i3-2/config/* /home/$nombre_usuario/.config/
+rm -R i3-2/
+rm -R i3-2.zip
+chown -hR $nombre_usuario:users /home/$nombre_usuario/
+chown -hR $nombre_usuario:users /home/$nombre_usuario/.config/
+sleep 5
+    fi
+
+ 
+
+if [ "$plasmatema" == "true" ]; then
+#TITULO EN BARRAS
+titulo_progreso="Instalando Tema de KDE Plasma"
+barra_progreso
+
+mkdir /home/$nombre_usuario/.config
+mkdir /home/$nombre_usuario/.local
+mkdir /home/$nombre_usuario/.kde4
+
+wget https://raw.githubusercontent.com/CodigoCristo/config/master/kde.zip
+unzip kde.zip
+cp -rf kde/config/* /home/$nombre_usuario/.config/
+cp -rf kde/local/* /home/$nombre_usuario/.local/
+cp -rf kde/kde4/* /home/$nombre_usuario/.kde4/
+rm -R kde/
+rm -R kde.zip
+chown -hR $nombre_usuario:users /home/$nombre_usuario/
+chown -hR $nombre_usuario:users /home/$nombre_usuario/.config/
+chown -hR $nombre_usuario:users /home/$nombre_usuario/.local/
+chown -hR $nombre_usuario:users /home/$nombre_usuario/.kde4/
+sleep 3
+    fi
+
+
+
+if [ "$qtile_config" == "true" ]; then
+#TITULO EN BARRAS
+titulo_progreso="Configurando Qtile"
+barra_progreso
+
+mkdir -p /home/$nombre_usuario/.config/qtile/
+cp /usr/share/doc/qtile/default_config.py /home/$nombre_usuario/.config/qtile/config.py
+python2 -m py_compile /home/$nombre_usuario/.config/qtile/config.py
+echo -e ""
+echo -e ""
+echo -e "\t> Copiando archivo /.config/qtile/config.py"
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' _
+echo -e ""
+sleep 3
+echo -e ""
+echo -e "\t> Ejecutando: python2 -m py_compile /.config/qtile/config.py"
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' _
+echo -e ""
+sleep 3
+
+chown -hR $nombre_usuario:users /home/$nombre_usuario/
+chown -hR $nombre_usuario:users /home/$nombre_usuario/.config/qtile/
+chown -hR $nombre_usuario:users /home/$nombre_usuario/.config/qtile/config.py
+sleep 5
+    fi
+
+
+
+if [ "$aurherlp" == "true" ]; then
+titulo_progreso="Eliminando AUR Helper"
+barra_progreso
+pacman -R $AUR_DELETE --noconfirm && mensaje_install
+    fi
+
+
+# Ejemplo 
+# variable=false
+# variable=true
+# if [ "$variable" == "true" ]; then
+#    echo contenido_a_mostrar
+#    fi
+
+
+clear
+#Load the X11 keymap
+cmd=(dialog --backtitle "$titulo" --title "-| Distribución del teclado para Xorg |-" --keep-tite --menu "\n" 10 0 10)
+
+options=(latam      "LatinoAmericano"
+         es         "Español"
+         us         "Ingles"
+         otros      "(+)Teclados")
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+
+for choice in $choices
+do
+    case $choice in
+        es)
+            keyboard="es"
+                    keymap=$keyboard  
+            ;;
+            
+        latam)
+            keyboard="latam"
+                    keymap=$keyboard 
+            ;;
+            
+        us)
+            keyboard="us"
+                    keymap=$keyboard  
+            ;;
+            
+        otros)
+            selected=0 
+            while [ $selected == "0" ];do 
+                locales="$(localectl list-x11-keymap-layouts | awk '$locales=$locales" Keyboard"')" && locales=$(echo "$locales") 
+                keyboard=$(dialog --backtitle "$titulo" --clear --title "-| Distribución del teclado: |-" --menu "\n" 15 0 15   ${locales} 2>&1 > /dev/tty) 
+                if [ $? == 0 ];then 
+                    keymap=$keyboard 
+                    selected=1 
+                else 
+                    dialog --backtitle "$titulo" --title "-| ERROR |-" --stdout --ok-label 'Siguiente' --msgbox "Ingrese una distribución del teclado para continuar" 5 55 
+                fi
+            done
+            ;;
+    esac
+done
+#FIN the X11 keymap
+
+
+
+localectl set-x11-keymap $keymap
+clear
+
+
+echo $SH | awk -F " " '{print $1}' >> shell
+SH=$(cat shell)
+chsh -s /bin/$SH
+chsh -s /usr/bin/$SH $nombre_usuario
+chsh -s /bin/$SH $nombre_usuario
+cp /root/bashrc /root/.bashrc
+rm shell
+rm DMservice
+rm GPUvirt
+clear
+
+sed -i '80d' /etc/sudoers
+sed -i "80i $nombre_usuario ALL=(ALL) ALL" /etc/sudoers
+# cp pacman-chroot.conf /etc/pacman.conf
+clear
+
+titulo_progreso="Actualizando Sistema"
+barra_progreso
+sudo -u $nombre_usuario xdg-user-dirs-update --force
+pacman -Syu --noconfirm
+ls -l /home/$nombre_usuario
+echo ''
+echo ''
+neofetch
+echo ''
+echo https://t.me/ArchLinuxCristo 
+mensaje_install
+clear
+
+####################################################################
+#if [[ -n $wifinet1 || -n $wifinet2 ]]; then
+#wifinet1=$(netctl list | awk -F " " '{print $1}')
+#netctl disable $wifinet1
+#clear
+#wifinet2=$(netctl list | awk -F " " '{print $2}')
+#netctl disable $wifinet2
+#systemctl disable netctl
+#fi
+clear
+systemctl enable dhcpcd NetworkManager
+clear
+systemctl start dhcpcd NetworkManager
+clear
+####################################################################
+
+#Deshabilitar el inicio de sesión automático root tn tty1
+rm -R /etc/systemd/system/getty@tty1.service.d
+sed -i 's/sh chroot//g' /root/.bashrc
+rm /root/.bash_profile
+rm chroot
+reboot
+#Eliminar los scripts y reinic

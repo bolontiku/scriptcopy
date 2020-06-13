@@ -1,5 +1,6 @@
 #!/bin/bash
 clear
+git clone https://github.com/bolontiku/scriptcopy
 cd arcris/
 
 chmod +777 Arcris

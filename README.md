@@ -1,4 +1,4 @@
-# ArcriS
+# Scriptcopy
 
 > Instalar Arch Linux en Español
 ```

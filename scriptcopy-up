@@ -1,10 +1,10 @@
 #!/bin/bash
 clear
 git clone https://github.com/bolontiku/scriptcopy
-cd arcris/
+cd scriptcopy/
 
-chmod +777 Arcris
-chmod +777 arcris-up
+chmod +777 Scriptcopy
+chmod +777 scriptcopy-up
 
 clear
 for i in $(seq 1 100)
@@ -15,10 +15,10 @@ done | dialog --title '| Hecho por Código Cristo |' --gauge "\nVisite la comuni
 
 
 cp .dialogrc ~/.dialogrc
-cp Arcris /bin/arcris
-cp arcris-up /bin/arcris-up
+cp Scriptcopy /bin/scriptcopy
+cp arcris-up /bin/scriptcopy-up
 
 cd ..
-rm -r arcris
+rm -r scriptcopy
 clear
-arcris
+scriptcopy
